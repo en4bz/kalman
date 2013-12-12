@@ -9,6 +9,16 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/kalman</url>
 
+	<depend package="tf2"/>
+  	<depend package="roscpp"/>
+	<depend package="nav_msgs"/>
+	<depend package="sensor_msgs"/>
+  	<depend package="geometry_msgs"/>
+  	<depend package="cv_bridge"/>
+
+  	<rosdep name="opencv2.3"/>
+  	<rosdep name="boost" />
+
 </package>
 
 
