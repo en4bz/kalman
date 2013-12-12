@@ -1,0 +1,14 @@
+<package>
+  <description brief="kalman">
+
+     kalman
+
+  </description>
+  <author>Ian FORBES</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/kalman</url>
+
+</package>
+
+
