@@ -14,11 +14,14 @@
 
 class kalman {
 	const cv::Mat map;
+	cv::KalmanFilter kf;
+	double gt_x, gt_y, gt_theta;
     ros::Subscriber cmd_sub;
     ros::Subscriber laser_sub;
     ros::Subscriber bpgt_sub;
 public:
     kalman(ros::NodeHandle& nh, const cv::Mat& pmap);
+	void pose_callback(const nav_msgs::Odometry msg);
 
     cv::Point2d toStage(cv::Point2i p) const;
     cv::Point2i toImage(cv::Point2d p) const;
