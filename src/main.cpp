@@ -12,13 +12,14 @@ int main(int argc, char *argv[]){
     ros::NodeHandle node;
     if(argc != 2)
         std::cout << "No Input Image!" << std::endl;
+
     const cv::Mat map = cv::imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
+    const int spin_rate = 10;
 
 	cv::namedWindow(name);
 
-    kalman k(node,map);
+    kalman k(node,map,spin_rate);
 
-    const int spin_rate = 10;
     ros::Rate rate(spin_rate);
     while( ros::ok() ){
         ros::spinOnce();

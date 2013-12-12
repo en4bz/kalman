@@ -1,10 +1,15 @@
 #include "kalman.hpp"
 
-kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap) : map(pmap.clone()) {
+kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pmap.clone()), dt(1.0/(double)spin_rate) {
 
 //  this->cmd_sub = nh.subscribe("odom", 1, &filter::propagate, this);
 //	this->laser_sub = nh.subscribe("base_scan", 1, &filter::laser_update, this);
 	this->bpgt_sub = nh.subscribe("base_pose_ground_truth", 1, &kalman::pose_callback, this);
+
+	this->kf.transitionMatrix = cv::Mat::eye(3,3, CV_TYPE);
+	this->kf.controlMatrix = cv::Mat::eye(3,3,CV_TYPE);
+	this->kf.controlMatrix *= dt;
+	this->kf.measurementMatrix = cv::Mat::eye(3,3,CV_TYPE);
 
     //Bound image by occupied cells.
     this->map.row(0) = cv::Scalar(0);
