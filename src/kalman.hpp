@@ -21,16 +21,13 @@ class kalman {
     ros::Subscriber laser_sub;
     ros::Subscriber bpgt_sub;
 
-    cv::Mat statePre;           //!< predicted state (x'(k)): x(k)=A*x(k-1)+B*u(k)
-    cv::Mat statePost;          //!< corrected state (x(k)): x(k)=x'(k)+K(k)*(z(k)-H*x'(k))
+    cv::Mat X;           //!< predicted state (x'(k)): x(k)=A*x(k-1)+B*u(k)
     cv::Mat F;   				//!< state transition matrix (F)
     cv::Mat controlMatrix;      //!< control matrix (B) (not used if there is no control)
     cv::Mat H;  				//!< measurement matrix (H)
     cv::Mat processNoiseCov;    //!< process noise covariance matrix (Q)
     cv::Mat measurementNoiseCov;//!< measurement noise covariance matrix (R)
-    cv::Mat PPre;        //!< priori error estimate covariance matrix (P'(k)): P'(k)=A*P(k-1)*At + Q)*/
     cv::Mat K;               //!< Kalman gain matrix (K(k)): K(k)=P'(k)*Ht*inv(H*P'(k)*Ht+R)
-    cv::Mat PPost;       //!< posteriori error estimate covariance matrix (P(k)): P(k)=(I-K(k)*H)*P'(k)
 	cv::Mat P;
 
 
@@ -38,12 +35,11 @@ public:
     kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate);
 
 	void pose_callback(const nav_msgs::Odometry msg);
-	void motion_callback(const nav_msgs::Odometry msg);
 	void laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg);
 
 	double ray_trace(const double x, const double y, const double theta, const double range, const double angle) const;
 
-	void predict();
+	void predict(const nav_msgs::Odometry msg);
 	void correct();
 
     cv::Point2d toStage(cv::Point2i p) const;

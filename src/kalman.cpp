@@ -2,7 +2,7 @@
 
 kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pmap.clone()), dt(1.0/(double)spin_rate) {
 
-	this->cmd_sub = nh.subscribe("odom", 1, &kalman::motion_callback, this);
+	this->cmd_sub = nh.subscribe("odom", 1, &kalman::predict, this);
 	this->laser_sub = nh.subscribe("base_scan", 1, &kalman::laser_callback, this);
 	this->bpgt_sub = nh.subscribe("base_pose_ground_truth", 1, &kalman::pose_callback, this);
 
@@ -18,39 +18,36 @@ kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pm
     this->map.col(map.size().height - 1)  = cv::Scalar(0);
 }
 
-void kalman::motion_callback(const nav_msgs::Odometry msg){
-	this->linear = msg.twist.twist.linear.x;
-	this->angular = msg.twist.twist.angular.z;
-	return;
-}
-
 
 void kalman::laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg){
 	return;
 }
 
-void kalman::predict(){
-	this->F.at<double>(1,3) = 1;
-	this->F.at<double>(2,3) = 1;
+void kalman::predict(const nav_msgs::Odometry msg){
+	this->F.at<double>(1,3) = -linear * dt * sin( X.at<double>(3,0) );
+	this->F.at<double>(2,3) = linear * dt * cos( X.at<double>(3,0) );
 
-	this->statePre = F * statePost;
+	this->X = F * X;
 
 	P = F * P * F.t(); // + Q
 
+	this->linear = msg.twist.twist.linear.x;
+	this->angular = msg.twist.twist.angular.z;
 	return;
 }
 
 void kalman::correct(){
 	static cv::Mat I = cv::Mat::eye(3,3,CV_TYPE);
-	const double x = this->statePre.at<double>(0,0);
-	const double y = this->statePre.at<double>(1,0);
-	const double theta = this->statePre.at<double>(2,0);
+	const double x = this->X.at<double>(0,0);
+	const double y = this->X.at<double>(1,0);
+	const double theta = this->X.at<double>(2,0);
 
 	cv::Mat res(3,1,CV_TYPE);
 
 	double range1,range2,range3;
 	range1 = range2 = range3 = 0;
 	double angle = 0;
+
 
 
 	res.at<double>(0,0) = range1 - ray_trace(x,y,theta,5,angle);
@@ -69,7 +66,7 @@ void kalman::correct(){
 	cv::Mat S = H * P * H.t();  // + R
 	cv::Mat K = P * H.t() * S.inv();
 
-	statePost = statePre + K*res;
+	X += K*res;
 
 	P = (I - K * H) * P;
 }
