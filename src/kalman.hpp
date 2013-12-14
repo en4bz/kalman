@@ -14,13 +14,24 @@
 
 class kalman {
 	const cv::Mat map;
-	cv::KalmanFilter kf;
 	const double dt;
 	double gt_x, gt_y, gt_theta;
 	double linear, angular;
     ros::Subscriber cmd_sub;
     ros::Subscriber laser_sub;
     ros::Subscriber bpgt_sub;
+
+    cv::Mat statePre;           //!< predicted state (x'(k)): x(k)=A*x(k-1)+B*u(k)
+    cv::Mat statePost;          //!< corrected state (x(k)): x(k)=x'(k)+K(k)*(z(k)-H*x'(k))
+    cv::Mat F;   				//!< state transition matrix (F)
+    cv::Mat controlMatrix;      //!< control matrix (B) (not used if there is no control)
+    cv::Mat H;  				//!< measurement matrix (H)
+    cv::Mat processNoiseCov;    //!< process noise covariance matrix (Q)
+    cv::Mat measurementNoiseCov;//!< measurement noise covariance matrix (R)
+    cv::Mat errorCovPre;        //!< priori error estimate covariance matrix (P'(k)): P'(k)=A*P(k-1)*At + Q)*/
+    cv::Mat K;               //!< Kalman gain matrix (K(k)): K(k)=P'(k)*Ht*inv(H*P'(k)*Ht+R)
+    cv::Mat errorCovPost;       //!< posteriori error estimate covariance matrix (P(k)): P(k)=(I-K(k)*H)*P'(k)
+
 public:
     kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate);
 

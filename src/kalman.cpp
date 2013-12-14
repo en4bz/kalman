@@ -6,10 +6,10 @@ kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pm
 	this->laser_sub = nh.subscribe("base_scan", 1, &kalman::laser_callback, this);
 	this->bpgt_sub = nh.subscribe("base_pose_ground_truth", 1, &kalman::pose_callback, this);
 
-	this->kf.transitionMatrix = cv::Mat::eye(3,3, CV_TYPE);
-	this->kf.controlMatrix = cv::Mat::eye(3,3,CV_TYPE);
-	this->kf.controlMatrix *= dt;
-	this->kf.measurementMatrix = cv::Mat::eye(3,3,CV_TYPE);
+	this->F = cv::Mat::eye(3,3, CV_TYPE);
+	this->controlMatrix = cv::Mat::eye(3,3,CV_TYPE);
+	this->controlMatrix *= dt;
+	this->H = cv::Mat::eye(3,3,CV_TYPE);
 
     //Bound image by occupied cells.
     this->map.row(0) = cv::Scalar(0);
@@ -19,6 +19,8 @@ kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pm
 }
 
 void kalman::motion_callback(const nav_msgs::Odometry msg){
+	this->linear = msg.twist.twist.linear.x;
+	this->angular = msg.twist.twist.angular.z;
 	return;
 }
 
@@ -28,12 +30,16 @@ void kalman::laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg){
 }
 
 void kalman::predict(){
-	kf.predict(cv::Mat());
+	this->F.at<double>(1,3) = 1;
+	this->F.at<double>(2,3) = 1;
+
+	this->statePre = F * statePost;
+
 	return;
 }
 
 void kalman::correct(){
-	kf.correct(cv::Mat());
+	//this->measurementMatrix = 0;
 	return;
 }
 
