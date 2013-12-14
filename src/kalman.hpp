@@ -39,6 +39,8 @@ public:
 	void motion_callback(const nav_msgs::Odometry msg);
 	void laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg);
 
+	void ray_trace(const double x, const double y, const double theta, const double range, const double angle);
+
 	void predict();
 	void correct();
 

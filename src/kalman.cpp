@@ -43,6 +43,37 @@ void kalman::correct(){
 	return;
 }
 
+void kalman::ray_trace(const double x, const double y, const double theta, const double range, const double angle){//const double y, const double theta, const double range, const double angle){
+    //std::cout << "Range: " << range << " Angle: " << angle << std::endl;
+    if(range >= 29.9)
+        return;
+
+	const cv::Point2i robot = this->toImage( cv::Point2d(x, y) ); //Get Robot's Esitimated position.
+
+	const double laser_x = range * cos(theta + angle);
+    const double laser_y = range * sin(theta + angle);
+
+    const cv::Point2d stage_exp(x + laser_x, y + laser_y);
+    const cv::Point2i map_expected = this->toImage(stage_exp);
+
+    cv::LineIterator lit(this->map, robot, map_expected);
+    if(lit.count == -1){
+		std::cout << "LINE ERROR";
+        return;
+	}
+
+	cv::Point2d actual;
+    while(true){ //Follow line until hit occupied cell. Bounded the image in ctor so can't loop forever.
+    	if(*(*lit) == OCCUPIED){
+        	actual = this->toStage( lit.pos() ); // Difference between estimated and expected.
+            break;
+        }
+    	lit++;
+    }
+	return;
+}
+
+
 cv::Point2d kalman::toStage(cv::Point2i p) const{
     const double x_ratio = 50.0/map.size().width;
     const double y_ratio = 50.0/map.size().height;
