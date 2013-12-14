@@ -28,9 +28,11 @@ class kalman {
     cv::Mat H;  				//!< measurement matrix (H)
     cv::Mat processNoiseCov;    //!< process noise covariance matrix (Q)
     cv::Mat measurementNoiseCov;//!< measurement noise covariance matrix (R)
-    cv::Mat errorCovPre;        //!< priori error estimate covariance matrix (P'(k)): P'(k)=A*P(k-1)*At + Q)*/
+    cv::Mat PPre;        //!< priori error estimate covariance matrix (P'(k)): P'(k)=A*P(k-1)*At + Q)*/
     cv::Mat K;               //!< Kalman gain matrix (K(k)): K(k)=P'(k)*Ht*inv(H*P'(k)*Ht+R)
-    cv::Mat errorCovPost;       //!< posteriori error estimate covariance matrix (P(k)): P(k)=(I-K(k)*H)*P'(k)
+    cv::Mat PPost;       //!< posteriori error estimate covariance matrix (P(k)): P(k)=(I-K(k)*H)*P'(k)
+	cv::Mat P;
+
 
 public:
     kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate);
@@ -39,7 +41,7 @@ public:
 	void motion_callback(const nav_msgs::Odometry msg);
 	void laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg);
 
-	void ray_trace(const double x, const double y, const double theta, const double range, const double angle);
+	double ray_trace(const double x, const double y, const double theta, const double range, const double angle) const;
 
 	void predict();
 	void correct();

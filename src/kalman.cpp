@@ -35,18 +35,49 @@ void kalman::predict(){
 
 	this->statePre = F * statePost;
 
+	P = F * P * F.t(); // + Q
+
 	return;
 }
 
 void kalman::correct(){
-	//this->measurementMatrix = 0;
-	return;
+	static cv::Mat I = cv::Mat::eye(3,3,CV_TYPE);
+	const double x = this->statePre.at<double>(0,0);
+	const double y = this->statePre.at<double>(1,0);
+	const double theta = this->statePre.at<double>(2,0);
+
+	cv::Mat res(3,1,CV_TYPE);
+
+	double range1,range2,range3;
+	range1 = range2 = range3 = 0;
+	double angle = 0;
+
+
+	res.at<double>(0,0) = range1 - ray_trace(x,y,theta,5,angle);
+	res.at<double>(1,0) = range2 - ray_trace(x,y,theta,5,angle);
+	res.at<double>(2,0) = range3 - ray_trace(x,y,theta,5,angle);
+
+
+	const double dx = 0.1;
+	const double dy = 0.1;
+	const double dtheta = 0.1;
+	this->H.at<double>(0,0) = (ray_trace(x-dx,y,theta,range1,angle) - ray_trace(x+dx,y,theta,range1,angle) ) / 2*dx;
+	this->H.at<double>(0,1) = (ray_trace(x,y-dy,theta,range1,angle) - ray_trace(x,y+dy,theta,range1,angle) ) / 2*dy;
+	this->H.at<double>(0,2) = (ray_trace(x,y,theta-dtheta,range1,angle) - ray_trace(x,y,theta+dtheta,range1,angle) ) / 2*dtheta;
+
+
+	cv::Mat S = H * P * H.t();  // + R
+	cv::Mat K = P * H.t() * S.inv();
+
+	statePost = statePre + K*res;
+
+	P = (I - K * H) * P;
 }
 
-void kalman::ray_trace(const double x, const double y, const double theta, const double range, const double angle){//const double y, const double theta, const double range, const double angle){
+double kalman::ray_trace(const double x, const double y, const double theta, const double range, const double angle) const{//const double y, const double theta, const double range, const double angle){
     //std::cout << "Range: " << range << " Angle: " << angle << std::endl;
     if(range >= 29.9)
-        return;
+        return 0;
 
 	const cv::Point2i robot = this->toImage( cv::Point2d(x, y) ); //Get Robot's Esitimated position.
 
@@ -59,7 +90,7 @@ void kalman::ray_trace(const double x, const double y, const double theta, const
     cv::LineIterator lit(this->map, robot, map_expected);
     if(lit.count == -1){
 		std::cout << "LINE ERROR";
-        return;
+        return 0;
 	}
 
 	cv::Point2d actual;
@@ -70,7 +101,9 @@ void kalman::ray_trace(const double x, const double y, const double theta, const
         }
     	lit++;
     }
-	return;
+	const double dx = (x - actual.x);
+	const double dy = (y - actual.y);
+	return sqrt(dx*dx + dy*dy);
 }
 
 
