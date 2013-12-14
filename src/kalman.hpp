@@ -12,6 +12,11 @@
 #include <LinearMath/btMatrix3x3.h>
 #include <LinearMath/btQuaternion.h>
 
+struct rangle{
+	double range, angle;
+	rangle(double r, double a) : range(r), angle(a) {}
+};
+
 class kalman {
 	const cv::Mat map;
 	const double dt;
@@ -21,18 +26,20 @@ class kalman {
     ros::Subscriber laser_sub;
     ros::Subscriber bpgt_sub;
 
-    cv::Mat X;           //!< predicted state (x'(k)): x(k)=A*x(k-1)+B*u(k)
-    cv::Mat F;   				//!< state transition matrix (F)
-    cv::Mat controlMatrix;      //!< control matrix (B) (not used if there is no control)
-    cv::Mat H;  				//!< measurement matrix (H)
-    cv::Mat processNoiseCov;    //!< process noise covariance matrix (Q)
-    cv::Mat measurementNoiseCov;//!< measurement noise covariance matrix (R)
-    cv::Mat K;               //!< Kalman gain matrix (K(k)): K(k)=P'(k)*Ht*inv(H*P'(k)*Ht+R)
-	cv::Mat P;
+	std::vector<rangle> laser;
+
+    cv::Vec3d X;           //!< predicted state (x'(k)): x(k)=A*x(k-1)+B*u(k)
+    cv::Matx<double,3,3> F;   				//!< state transition matrix (F)
+    cv::Matx<double,3,3> I;   				//!< state transition matrix (F)
+    cv::Matx<double,3,3> H;  				//!< measurement matrix (H)
+    //cv::Mat processNoiseCov;    //!< process noise covariance matrix (Q)
+    //cv::Mat measurementNoiseCov;//!< measurement noise covariance matrix (R)
+    cv::Matx<double,3,3> K;               //!< Kalman gain matrix (K(k)): K(k)=P'(k)*Ht*inv(H*P'(k)*Ht+R)
+	cv::Matx<double,3,3> P;
 
 
 public:
-    kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate);
+	kalman(ros::NodeHandle& nh, const cv::Mat& pmap, double x_init, double y_init, double theta_init, int spin_rate);
 
 	void pose_callback(const nav_msgs::Odometry msg);
 	void laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg);
@@ -44,6 +51,8 @@ public:
 
     cv::Point2d toStage(cv::Point2i p) const;
     cv::Point2i toImage(cv::Point2d p) const;
+
+	cv::Mat show_map(const std::string& win_name, bool draw) const;
 
     enum {OCCUPIED = 0, FREE = 255};
 	const static int CV_TYPE = CV_64F;

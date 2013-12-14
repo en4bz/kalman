@@ -1,15 +1,23 @@
 #include "kalman.hpp"
 
-kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pmap.clone()), dt(1.0/(double)spin_rate) {
+kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, double x_init, double y_init, double theta_init, int spin_rate)
+	: map(pmap.clone()), dt(1.0/(double)spin_rate) {
 
 	this->cmd_sub = nh.subscribe("odom", 1, &kalman::predict, this);
 	this->laser_sub = nh.subscribe("base_scan", 1, &kalman::laser_callback, this);
 	this->bpgt_sub = nh.subscribe("base_pose_ground_truth", 1, &kalman::pose_callback, this);
 
-	this->F = cv::Mat::eye(3,3, CV_TYPE);
-	this->controlMatrix = cv::Mat::eye(3,3,CV_TYPE);
-	this->controlMatrix *= dt;
-	this->H = cv::Mat::eye(3,3,CV_TYPE);
+	this->X[0] = x_init;
+	this->X[1] = y_init;
+	this->X[2] = theta_init;
+
+	this->F(0,0) = 1;
+	this->F(1,1) = 1;
+	this->F(2,2) = 1;
+
+	this->I(0,0) = 1;
+	this->I(1,1) = 1;
+	this->I(2,2) = 1;
 
     //Bound image by occupied cells.
     this->map.row(0) = cv::Scalar(0);
@@ -20,14 +28,24 @@ kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pm
 
 
 void kalman::laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg){
+ 	const int size = (msg->angle_max - msg->angle_min) / msg->angle_increment;
+
+	laser.clear();
+
+	laser.push_back( rangle(msg->ranges[0], msg->angle_min));
+	laser.push_back( rangle(msg->ranges[size-1], msg->angle_max));
+	laser.push_back( rangle(msg->ranges[size/2], 0));
+
 	return;
 }
 
 void kalman::predict(const nav_msgs::Odometry msg){
-	this->F.at<double>(1,3) = -linear * dt * sin( X.at<double>(3,0) );
-	this->F.at<double>(2,3) = linear * dt * cos( X.at<double>(3,0) );
+	this->X[0] += linear * dt * cos( X[2] );
+	this->X[1] += linear * dt * sin( X[2] );
+	this->X[2] += angular * dt;
 
-	this->X = F * X;
+	this->F(0,2) = -linear * dt * sin( X[2] ); //t+1 ?
+	this->F(1,2) =  linear * dt * cos( X[2] ); //t+1 ?
 
 	P = F * P * F.t(); // + Q
 
@@ -37,34 +55,25 @@ void kalman::predict(const nav_msgs::Odometry msg){
 }
 
 void kalman::correct(){
-	static cv::Mat I = cv::Mat::eye(3,3,CV_TYPE);
-	const double x = this->X.at<double>(0,0);
-	const double y = this->X.at<double>(1,0);
-	const double theta = this->X.at<double>(2,0);
-
-	cv::Mat res(3,1,CV_TYPE);
-
-	double range1,range2,range3;
-	range1 = range2 = range3 = 0;
-	double angle = 0;
-
-
-
-	res.at<double>(0,0) = range1 - ray_trace(x,y,theta,5,angle);
-	res.at<double>(1,0) = range2 - ray_trace(x,y,theta,5,angle);
-	res.at<double>(2,0) = range3 - ray_trace(x,y,theta,5,angle);
-
-
+	const double x = this->X[0];
+	const double y = this->X[1];
+	const double theta = this->X[2];
 	const double dx = 0.1;
 	const double dy = 0.1;
 	const double dtheta = 0.1;
-	this->H.at<double>(0,0) = (ray_trace(x-dx,y,theta,range1,angle) - ray_trace(x+dx,y,theta,range1,angle) ) / 2*dx;
-	this->H.at<double>(0,1) = (ray_trace(x,y-dy,theta,range1,angle) - ray_trace(x,y+dy,theta,range1,angle) ) / 2*dy;
-	this->H.at<double>(0,2) = (ray_trace(x,y,theta-dtheta,range1,angle) - ray_trace(x,y,theta+dtheta,range1,angle) ) / 2*dtheta;
 
+	cv::Vec3d res;
 
-	cv::Mat S = H * P * H.t();  // + R
-	cv::Mat K = P * H.t() * S.inv();
+	for(size_t i = 0; i < laser.size(); i++){
+		const double angle = laser[i].angle;
+		res[i] = laser[i].range - ray_trace(x,y,theta,5, angle);
+		this->H(i,0) = (ray_trace(x-dx,y,theta,5,angle) - ray_trace(x+dx,y,theta,5,angle) ) / 2*dx;
+		this->H(i,1) = (ray_trace(x,y-dy,theta,5,angle) - ray_trace(x,y+dy,theta,5,angle) ) / 2*dy;
+		this->H(i,2) = (ray_trace(x,y,theta-dtheta,5,angle) - ray_trace(x,y,theta+dtheta,5,angle) ) / 2*dtheta;
+	}
+
+	cv::Matx<double,3,3> S = H * P * H.t();  // + R
+	cv::Matx<double,3,3> K = P * H.t() * S.inv();
 
 	X += K*res;
 
@@ -120,9 +129,25 @@ cv::Point2i kalman::toImage(cv::Point2d p) const{
     return cv::Point2i (x,y);
 }
 
+
+cv::Mat kalman::show_map(const std::string& win_name, bool draw) const {
+    cv::Mat clone = this->map.clone();
+
+	const cv::Point2d p(X[0], X[1]);
+    cv::circle(clone, this->toImage(cv::Point2d(gt_x,gt_y)), 5, 155, -1);
+    cv::circle(clone, this->toImage(p), 5, 10, -1);
+
+    if(draw){
+        cv::imshow(win_name, clone);
+        cv::waitKey(10);
+    }
+	return clone;
+}
+
+
 void kalman::pose_callback(const nav_msgs::Odometry msg){
-    this->gt_y = -msg.pose.pose.position.y;
-    this->gt_x = msg.pose.pose.position.x;
+    this->gt_x = -msg.pose.pose.position.y;
+    this->gt_y = msg.pose.pose.position.x;
 
     double roll, pitch, heading;
 

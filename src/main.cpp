@@ -18,12 +18,13 @@ int main(int argc, char *argv[]){
 
 	cv::namedWindow(name);
 
-    kalman k(node,map,spin_rate);
+    kalman k(node,map,12,12,0,spin_rate);
 
     ros::Rate rate(spin_rate);
     while( ros::ok() ){
         ros::spinOnce();
 		k.correct();
+		k.show_map(name,true);
         rate.sleep();
     }
     ros::shutdown();
