@@ -71,6 +71,7 @@ void kalman::correct(){
 		this->H(i,1) = (ray_trace(x,y-dy,theta,5,angle) - ray_trace(x,y+dy,theta,5,angle) ) / 2*dy;
 		this->H(i,2) = (ray_trace(x,y,theta-dtheta,5,angle) - ray_trace(x,y,theta+dtheta,5,angle) ) / 2*dtheta;
 	}
+	std::cout << cv::Point3d(res) << std::endl;
 
 	cv::Matx<double,3,3> S = H * P * H.t();  // + R
 	cv::Matx<double,3,3> K = P * H.t() * S.inv();
@@ -134,7 +135,7 @@ cv::Mat kalman::show_map(const std::string& win_name, bool draw) const {
     cv::Mat clone = this->map.clone();
 
 	const cv::Point2d p(X[0], X[1]);
-    cv::circle(clone, this->toImage(cv::Point2d(gt_x,gt_y)), 5, 155, -1);
+//    cv::circle(clone, this->toImage(cv::Point2d(gt_x,gt_y)), 5, 155, -1);
     cv::circle(clone, this->toImage(p), 5, 10, -1);
 
     if(draw){
@@ -146,8 +147,8 @@ cv::Mat kalman::show_map(const std::string& win_name, bool draw) const {
 
 
 void kalman::pose_callback(const nav_msgs::Odometry msg){
-    this->gt_x = -msg.pose.pose.position.y;
-    this->gt_y = msg.pose.pose.position.x;
+//    this->gt_x = -msg.pose.pose.position.y;
+//    this->gt_y = msg.pose.pose.position.x;
 
     double roll, pitch, heading;
 
@@ -163,5 +164,5 @@ void kalman::pose_callback(const nav_msgs::Odometry msg){
     else
         heading += M_PI/2;
 
-    this->gt_theta = heading;
+//    this->gt_theta = heading;
 }
