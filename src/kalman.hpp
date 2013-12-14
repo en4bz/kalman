@@ -17,12 +17,16 @@ class kalman {
 	cv::KalmanFilter kf;
 	const double dt;
 	double gt_x, gt_y, gt_theta;
+	double linear, angular;
     ros::Subscriber cmd_sub;
     ros::Subscriber laser_sub;
     ros::Subscriber bpgt_sub;
 public:
     kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate);
+
 	void pose_callback(const nav_msgs::Odometry msg);
+	void motion_callback(const nav_msgs::Odometry msg);
+	void laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg);
 
 	void predict();
 	void correct();

@@ -2,8 +2,8 @@
 
 kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pmap.clone()), dt(1.0/(double)spin_rate) {
 
-//  this->cmd_sub = nh.subscribe("odom", 1, &filter::propagate, this);
-//	this->laser_sub = nh.subscribe("base_scan", 1, &filter::laser_update, this);
+	this->cmd_sub = nh.subscribe("odom", 1, &kalman::motion_callback, this);
+	this->laser_sub = nh.subscribe("base_scan", 1, &kalman::laser_callback, this);
 	this->bpgt_sub = nh.subscribe("base_pose_ground_truth", 1, &kalman::pose_callback, this);
 
 	this->kf.transitionMatrix = cv::Mat::eye(3,3, CV_TYPE);
@@ -18,11 +18,22 @@ kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pm
     this->map.col(map.size().height - 1)  = cv::Scalar(0);
 }
 
+void kalman::motion_callback(const nav_msgs::Odometry msg){
+	return;
+}
+
+
+void kalman::laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg){
+	return;
+}
+
 void kalman::predict(){
+	kf.predict(cv::Mat());
 	return;
 }
 
 void kalman::correct(){
+	kf.correct(cv::Mat());
 	return;
 }
 
