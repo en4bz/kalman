@@ -24,6 +24,9 @@ public:
     kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate);
 	void pose_callback(const nav_msgs::Odometry msg);
 
+	void predict();
+	void correct();
+
     cv::Point2d toStage(cv::Point2i p) const;
     cv::Point2i toImage(cv::Point2d p) const;
 

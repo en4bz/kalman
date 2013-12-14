@@ -18,6 +18,14 @@ kalman::kalman(ros::NodeHandle& nh, const cv::Mat& pmap, int spin_rate) : map(pm
     this->map.col(map.size().height - 1)  = cv::Scalar(0);
 }
 
+void kalman::predict(){
+	return;
+}
+
+void kalman::correct(){
+	return;
+}
+
 cv::Point2d kalman::toStage(cv::Point2i p) const{
     const double x_ratio = 50.0/map.size().width;
     const double y_ratio = 50.0/map.size().height;

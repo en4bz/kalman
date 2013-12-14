@@ -23,6 +23,8 @@ int main(int argc, char *argv[]){
     ros::Rate rate(spin_rate);
     while( ros::ok() ){
         ros::spinOnce();
+		k.predict();
+		k.correct();
         rate.sleep();
     }
     ros::shutdown();
