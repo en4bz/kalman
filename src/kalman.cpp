@@ -67,6 +67,7 @@ void kalman::correct(){
 	for(size_t i = 0; i < laser.size(); i++){
 		const double angle = laser[i].angle;
 		res[i] = laser[i].range - ray_trace(x,y,theta,5, angle);
+		//These forumals are wrong! They're backward f'(x) = f(x+h) - f(x-h) / 2h
 		this->H(i,0) = (ray_trace(x-dx,y,theta,5,angle) - ray_trace(x+dx,y,theta,5,angle) ) / 2*dx;
 		this->H(i,1) = (ray_trace(x,y-dy,theta,5,angle) - ray_trace(x,y+dy,theta,5,angle) ) / 2*dy;
 		this->H(i,2) = (ray_trace(x,y,theta-dtheta,5,angle) - ray_trace(x,y,theta+dtheta,5,angle) ) / 2*dtheta;
