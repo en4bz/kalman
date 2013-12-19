@@ -1,6 +1,7 @@
 #include <vector>
 #include <opencv2/opencv.hpp>
 #include <boost/random.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include <boost/nondet_random.hpp>
 #include <boost/random/normal_distribution.hpp>
 
@@ -32,7 +33,7 @@ class kalman {
     cv::Matx<double,3,3> F;   				//!< state transition matrix (F)
     cv::Matx<double,3,3> I;   				//!< state transition matrix (F)
     cv::Matx<double,3,3> H;  				//!< measurement matrix (H)
-    //cv::Mat processNoiseCov;    //!< process noise covariance matrix (Q)
+    cv::Matx<double,3,3> Q;					//!< process noise covariance matrix (Q)
     //cv::Mat measurementNoiseCov;//!< measurement noise covariance matrix (R)
     cv::Matx<double,3,3> K;               //!< Kalman gain matrix (K(k)): K(k)=P'(k)*Ht*inv(H*P'(k)*Ht+R)
 	cv::Matx<double,3,3> P;
@@ -44,7 +45,7 @@ public:
 	void pose_callback(const nav_msgs::Odometry msg);
 	void laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg);
 
-	double ray_trace(const double x, const double y, const double theta, const double range, const double angle) const;
+	double ray_trace(const double x, const double y, const double theta, const double angle) const;
 
 	void predict(const nav_msgs::Odometry msg);
 	void correct();
