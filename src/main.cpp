@@ -1,5 +1,5 @@
 #include <iostream>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
 
 #include "kalman.hpp"
 
@@ -14,7 +14,7 @@ int main(int argc, char *argv[]){
         std::cout << "No Input Image!" << std::endl;
 
     const cv::Mat map = cv::imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
-    const int spin_rate = 10;
+    const int spin_rate = 5;
 
 	cv::namedWindow(name);
 

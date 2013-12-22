@@ -1,5 +1,6 @@
 #include <vector>
-#include <opencv2/opencv.hpp>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <boost/random.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/nondet_random.hpp>
@@ -10,8 +11,8 @@
 #include "nav_msgs/Odometry.h"
 #include "sensor_msgs/LaserScan.h"
 
-#include <LinearMath/btMatrix3x3.h>
-#include <LinearMath/btQuaternion.h>
+#include <tf2/LinearMath/btMatrix3x3.h>
+#include <tf2/LinearMath/btQuaternion.h>
 
 struct rangle{
 	double range, angle;
@@ -32,10 +33,8 @@ class kalman {
     cv::Vec3d X;           //!< predicted state (x'(k)): x(k)=A*x(k-1)+B*u(k)
     cv::Matx<double,3,3> F;   				//!< state transition matrix (F)
     cv::Matx<double,3,3> I;   				//!< state transition matrix (F)
-    cv::Matx<double,3,3> H;  				//!< measurement matrix (H)
     cv::Matx<double,3,3> Q;					//!< process noise covariance matrix (Q)
     //cv::Mat measurementNoiseCov;//!< measurement noise covariance matrix (R)
-    cv::Matx<double,3,3> K;               //!< Kalman gain matrix (K(k)): K(k)=P'(k)*Ht*inv(H*P'(k)*Ht+R)
 	cv::Matx<double,3,3> P;
 
 
@@ -45,7 +44,11 @@ public:
 	void pose_callback(const nav_msgs::Odometry msg);
 	void laser_callback(const sensor_msgs::LaserScan::ConstPtr& msg);
 
-	double ray_trace(const double x, const double y, const double theta, const double angle) const;
+	double ray_trace(const double x, const double y, const double angle) const;
+
+    double partial_x(double,double,double,double) const;
+    double partial_y(double,double,double,double) const;
+    double partial_theta(double,double,double,double) const;
 
 	void predict(const nav_msgs::Odometry msg);
 	void correct();
