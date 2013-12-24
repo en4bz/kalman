@@ -16,15 +16,15 @@ int main(int argc, char *argv[]){
     const cv::Mat map = cv::imread(argv[1], CV_LOAD_IMAGE_GRAYSCALE);
     const int spin_rate = 5;
 
-	cv::namedWindow(name);
+    cv::namedWindow(name);
 
     kalman k(node,map,12,12,0,spin_rate);
 
     ros::Rate rate(spin_rate);
     while( ros::ok() ){
         ros::spinOnce();
-		k.correct();
-		k.show_map(name,true);
+        k.correct();
+        k.show_map(name,true);
         rate.sleep();
     }
     ros::shutdown();
