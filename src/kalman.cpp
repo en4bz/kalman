@@ -61,13 +61,9 @@ void kalman::predict(const nav_msgs::Odometry msg){
     static boost::variate_generator<boost::mt19937&, boost::normal_distribution<double> > dy(rng,y_noise);
     static boost::variate_generator<boost::mt19937&, boost::normal_distribution<double> > dtheta(rng,theta_noise);
 
-    double theta = X[2];
-
     this->X[0] += linear * dt * cos( X[2] ) + dx() * scale;
     this->X[1] += linear * dt * sin( X[2] ) + dy() * scale;
     this->X[2] += angular * dt + dtheta() * scale;
-
-    theta = X[2];
 
     //	std::cout << "X" << cv::Point3d(X) << std::endl;
 
